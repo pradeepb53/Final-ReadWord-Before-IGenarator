@@ -104,15 +104,15 @@ namespace ReadWord
                 myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderRight].LineStyle = WdLineStyle.wdLineStyleSingle;
                 myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderLeft].LineStyle = WdLineStyle.wdLineStyleSingle;
 
-                if (tableRowCount == 1) // Top border only on top of the page - for now
+                if (actualRowCount == 1) // Top border only on top of the page - for now
                 {
                     myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderTop].LineStyle = WdLineStyle.wdLineStyleSingle;
                 }
 
-                if (actualRowCount == 32)
-                {
-                    myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
-                }
+                //if (actualRowCount == 32)
+                //{
+                //    myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
+                //}
 
 
 
@@ -122,16 +122,16 @@ namespace ReadWord
                  columnOneLineNumber = 0;
 
 
-                if ((tableRowCount == 32) && (colNumber < 3))
+                if ((tableRowCount == 31) && (colNumber < 3))
                 {
                    
-                    rowNumber = (actualRowCount - 32);
+                    rowNumber = (actualRowCount - 31);
                     colNumber++;
                     tableRowCount = 0;
 
                 }
 
-                if ((tableRowCount == 32) && (colNumber == 3))
+                if ((tableRowCount == 31) && (colNumber == 3))
                 {
 
                     rowNumber = actualRowCount;
@@ -187,10 +187,10 @@ namespace ReadWord
                         myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderLeft].LineStyle = WdLineStyle.wdLineStyleSingle;
 
 
-                        if (tableRowCount == 1)
-                        {
-                            myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderTop].LineStyle = WdLineStyle.wdLineStyleSingle;
-                        }
+                        //if (tableRowCount == 1)
+                        //{
+                        //    myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderTop].LineStyle = WdLineStyle.wdLineStyleSingle;
+                        //}
 
                         
 
@@ -198,16 +198,16 @@ namespace ReadWord
                         columnOnePageNumber = 0;
                         columnOneLineNumber = 0;
 
-                        if ((tableRowCount == 32) && (colNumber < 3))
+                        if ((tableRowCount == 31) && (colNumber < 3))
                         {
                             
-                            rowNumber = (actualRowCount - 32);
+                            rowNumber = (actualRowCount - 31);
                             colNumber++;
                             tableRowCount = 0;
 
                         }
 
-                        if ((tableRowCount == 32) && (colNumber == 3))
+                        if ((tableRowCount == 31) && (colNumber == 3))
                         {
 
                             rowNumber = actualRowCount;
@@ -252,16 +252,16 @@ namespace ReadWord
                     myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderLeft].LineStyle = WdLineStyle.wdLineStyleSingle;
 
 
-                    if ((tableRowCount == 32) && (colNumber < 3))
+                    if ((tableRowCount == 31) && (colNumber < 3))
                     {
                         
-                        rowNumber = (actualRowCount - 32);
+                        rowNumber = (actualRowCount - 31);
                         colNumber++;
                         tableRowCount = 0;
 
                     }
 
-                    if ((tableRowCount == 32) && (colNumber == 3))
+                    if ((tableRowCount == 31) && (colNumber == 3))
                     {
 
                         rowNumber = actualRowCount;
