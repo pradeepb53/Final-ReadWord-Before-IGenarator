@@ -53,6 +53,7 @@ namespace ReadWord
            //WordIndex.createIndexTable(); // Index Table POC
 
            WordIndex.createWrodIndexTable(); // Real Index
+            //New routine needed - 11/23/2016
 
 
         }
