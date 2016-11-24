@@ -163,7 +163,7 @@ namespace FVRs_IG
 
         private void ReportProgress(int obj)
         {
-            progressBarCoreOps.Increment(obj);
+            progressBarCoreOps.Increment(obj); //
         }
 
         private void setProgressBar(int obj)
