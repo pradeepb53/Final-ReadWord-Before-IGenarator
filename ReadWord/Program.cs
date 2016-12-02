@@ -41,7 +41,6 @@ namespace ReadWord
             //int pages = document.ComputeStatistics(stat, Type.Missing);
             //Console.WriteLine(pages);
             //Console.ReadLine();
-
             //_________________________________________________________________________________________________________________________-
 
 
@@ -53,7 +52,7 @@ namespace ReadWord
            //WordIndex.createIndexTable(); // Index Table POC
 
            WordIndex.createWrodIndexTable(); // Real Index
-            //New routine needed - 11/23/2016
+            
 
 
         }
@@ -83,6 +82,27 @@ namespace ReadWord
 
             foreach (TranscriptWord item in SCustomWordDirectory)
             {
+                
+
+                if ((tableRowCount == 32) && (colNumber < 3))
+                {
+                    myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
+
+                    rowNumber = (actualRowCount - 32);
+                    colNumber++;
+                    tableRowCount = 0;
+
+                }
+
+                if ((tableRowCount == 32) && (colNumber == 3))
+                {
+                    myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
+
+                    rowNumber = actualRowCount;
+                    tableRowCount = 0;
+                    colNumber = 1;
+                }
+
                 if (colNumber == 1)
                 {
                     actualRowCount++;
@@ -96,12 +116,17 @@ namespace ReadWord
                 
                 cellRange.Font.Size = 10;
                 cellRange.Font.Bold = 1;
-                cellRange.Text = item.Name + " [" + item.Frequency + "]";
 
-                
+                Cell cell1 = myTable.Cell(rowNumber, colNumber);
 
-               // cellRange.ParagraphFormat.SpaceAfter = 0;
-             
+                cell1.Range.ParagraphFormat.SpaceBefore = 0.00f;
+
+                cellRange.Text = item.Name + " [" + item.Frequency + "]" + "\r\n";
+
+                cell1.Range.ParagraphFormat.SpaceAfter = 0.00f;
+
+                // cellRange.ParagraphFormat.SpaceAfter = 0;
+
                 myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderRight].LineStyle = WdLineStyle.wdLineStyleSingle;
                 myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderLeft].LineStyle = WdLineStyle.wdLineStyleSingle;
 
@@ -115,30 +140,9 @@ namespace ReadWord
                 //    myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
                 //}
 
-
-
-
                 columnCountPageAndLine = 0;
                  columnOnePageNumber = 0;
-                 columnOneLineNumber = 0;
-
-
-                if ((tableRowCount == 31) && (colNumber < 3))
-                {
-                   
-                    rowNumber = (actualRowCount - 31);
-                    colNumber++;
-                    tableRowCount = 0;
-
-                }
-
-                if ((tableRowCount == 31) && (colNumber == 3))
-                {
-
-                    rowNumber = actualRowCount;
-                    tableRowCount = 0;
-                    colNumber = 1;
-                }
+                 columnOneLineNumber = 0;        
 
 
                 foreach (Occurrence step in item.PageAndLine)
@@ -149,6 +153,25 @@ namespace ReadWord
                     if (columnCountPageAndLine == 2)
                     {
 
+                        if ((tableRowCount == 32) && (colNumber < 3))
+                        {
+                            myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
+
+                            rowNumber = (actualRowCount - 32);
+                            colNumber++;
+                            tableRowCount = 0;
+
+                        }
+
+                        if ((tableRowCount == 32) && (colNumber == 3))
+                        {
+                            myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
+
+                            rowNumber = actualRowCount;
+                            tableRowCount = 0;
+                            colNumber = 1;
+                        }
+
                         if (colNumber == 1)
                         {
                             actualRowCount++;
@@ -157,30 +180,24 @@ namespace ReadWord
 
                         rowNumber++;
                         tableRowCount++;
-
-                        //  cellRange.ParagraphFormat.SpaceBefore = 0;
-
-                        myTable.Cell(rowNumber, colNumber).TopPadding = 0.00f;
                         
-
-
-
                         cellRange = myTable.Cell(rowNumber, colNumber).Range;
                        
                         cellRange.Font.Size = 7;
                         cellRange.Font.Bold = 0;
 
-                        //cellRange.ParagraphFormat.SpaceBefore = 0.00f;
+                        cellRange.ParagraphFormat.SpaceBefore = 0.00f;           // Today
+                        myTable.Cell(rowNumber, colNumber).TopPadding = 0.00f;
 
-                        Cell cell = myTable.Cell(rowNumber, colNumber);
+                        Cell cell2 = myTable.Cell(rowNumber, colNumber);
                        
-                        cell.Range.ParagraphFormat.SpaceBefore = 0.00f;
+                        cell2.Range.ParagraphFormat.SpaceBefore = 0.00f;
 
-                        cellRange.Text = "[P" + columnOnePageNumber + ":" + "L" + columnOneLineNumber + "] [P" + step.CustomPageNumber + ":" + "L" + step.CustomLineNumber + "]";
+                        cellRange.Text = "[P" + columnOnePageNumber + ":" + "L" + columnOneLineNumber + "] [P" + step.CustomPageNumber + ":" + "L" + step.CustomLineNumber + "]" + "\r\n";
                         
 
-                       // cellRange.ParagraphFormat.SpaceAfter = 0.00f;
-                        cell.Range.ParagraphFormat.SpaceAfter = 0.00f;
+                        cellRange.ParagraphFormat.SpaceAfter = 0.00f;        // Today
+                        cell2.Range.ParagraphFormat.SpaceAfter = 0.00f;
 
                         myTable.Cell(rowNumber, colNumber).BottomPadding = 0.00f;
 
@@ -191,30 +208,11 @@ namespace ReadWord
                         //if (tableRowCount == 1)
                         //{
                         //    myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderTop].LineStyle = WdLineStyle.wdLineStyleSingle;
-                        //}
-
-                        
+                        //}           
 
                         columnCountPageAndLine = 0;
                         columnOnePageNumber = 0;
                         columnOneLineNumber = 0;
-
-                        if ((tableRowCount == 31) && (colNumber < 3))
-                        {
-                            
-                            rowNumber = (actualRowCount - 31);
-                            colNumber++;
-                            tableRowCount = 0;
-
-                        }
-
-                        if ((tableRowCount == 31) && (colNumber == 3))
-                        {
-
-                            rowNumber = actualRowCount;
-                            tableRowCount = 0;
-                            colNumber = 1;
-                        }
 
                     }
                     else
@@ -232,43 +230,54 @@ namespace ReadWord
 
                 if (columnCountPageAndLine == 1)
                 {
-
-                    if (colNumber == 1)
+                    if ((tableRowCount == 32) && (colNumber < 3))
                     {
-                        actualRowCount++;
+                        myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
 
-                    }
-
-                    rowNumber++;
-                    tableRowCount++;
-
-                    cellRange = myTable.Cell(rowNumber, colNumber).Range;
-                    cellRange.Font.Size = 7;
-                    cellRange.Font.Bold = 0;
-                    cellRange.Text = "[P" + columnOnePageNumber + ":" + "L" + columnOneLineNumber + "]" ;
-
-                   // cellRange.ParagraphFormat.SpaceAfter = 0;
-
-                    myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderRight].LineStyle = WdLineStyle.wdLineStyleSingle;
-                    myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderLeft].LineStyle = WdLineStyle.wdLineStyleSingle;
-
-
-                    if ((tableRowCount == 31) && (colNumber < 3))
-                    {
-                        
-                        rowNumber = (actualRowCount - 31);
+                        rowNumber = (actualRowCount - 32);
                         colNumber++;
                         tableRowCount = 0;
 
                     }
 
-                    if ((tableRowCount == 31) && (colNumber == 3))
+                    if ((tableRowCount == 32) && (colNumber == 3))
                     {
+                        myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
 
                         rowNumber = actualRowCount;
                         tableRowCount = 0;
                         colNumber = 1;
                     }
+
+                    if (colNumber == 1)
+                    {actualRowCount++;
+
+                    }
+
+                    rowNumber++;
+                    tableRowCount++;                
+
+                    cellRange = myTable.Cell(rowNumber, colNumber).Range;
+
+                    cellRange.Font.Size = 7;
+                    cellRange.Font.Bold = 0;
+
+                    cellRange.ParagraphFormat.SpaceBefore = 0.00f;           // Today
+                    myTable.Cell(rowNumber, colNumber).TopPadding = 0.00f;
+
+                    Cell cell3 = myTable.Cell(rowNumber, colNumber);
+
+                    cell3.Range.ParagraphFormat.SpaceBefore = 0.00f;
+
+                    cellRange.Text = "[P" + columnOnePageNumber + ":" + "L" + columnOneLineNumber + "]" + "\r\n";
+
+                    cellRange.ParagraphFormat.SpaceAfter = 0;          //Today
+                    cell3.Range.ParagraphFormat.SpaceAfter = 0.00f;
+
+                    myTable.Cell(rowNumber, colNumber).BottomPadding = 0.00f;
+
+                    myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderRight].LineStyle = WdLineStyle.wdLineStyleSingle;
+                    myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderLeft].LineStyle = WdLineStyle.wdLineStyleSingle;
 
                 }
                 
@@ -355,10 +364,10 @@ namespace ReadWord
         {
             List<TranscriptWord> SCustomWordDirectory = CustomWordDirectory.OrderBy(o => o.Name).ToList();
 
-            int totalElements = SCustomWordDirectory.Count;
+           // int totalElements = SCustomWordDirectory.Count;
 
 
-            Console.WriteLine("Total number of elements in the List : " + totalElements);
+            //Console.WriteLine("Total number of elements in the List : " + totalElements);
 
             Document indexDoc = app.Documents.Add();
             Range indexRange = indexDoc.Range();
@@ -415,10 +424,22 @@ namespace ReadWord
                 }
 
                 //If columnCount is 1, then print one line and reset counter 
+                if (columnCount == 1)
+                {
+                    Paragraph para3 = indexDoc.Paragraphs.Add();
+                    para3.Range.Font.Size = 7;
+                    para3.Range.Font.Bold = 0;
+                    para3.Range.Text = "[P" + columnOnePageNumber + ":" + "L" + columnOneLineNumber + "]" + "\r\n";
+                    para3.Range.ParagraphFormat.SpaceAfter = 0;
+
+                    columnCount = 0;
+                    columnOnePageNumber = 0;
+                    columnOneLineNumber = 0;
+                }
 
             }
 
-            Console.WriteLine("Number of Words : " + mainElements + " and sub items : " + subElements);
+           // Console.WriteLine("Number of Words : " + mainElements + " and sub items : " + subElements);
 
             indexDoc.Save();
             indexDoc.Close();
