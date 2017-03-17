@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Office.Interop.Word;
 using ReadWord;
+using System.Text.RegularExpressions;
 
 namespace ReadWord
 {
@@ -46,17 +47,414 @@ namespace ReadWord
 
 
             Program WordIndex = new Program();
-            WordIndex.processDocument();
+               WordIndex.processDocument();  // Read main document
 
-           // WordIndex.printWordIndex(); // Old print method
-           //WordIndex.createIndexTable(); // Index Table POC
+             WordIndex.printWordIndex(); // Old print method
+            // WordIndex.createIndexTable(); // Index Table POC
 
-           WordIndex.createWrodIndexTable(); // Real Index
-            
+            //WordIndex.createWrodIndexTable(); // Real Index
+            // WordIndex.createWrodNewIndexTable(); // New index - page at a time 12/25
 
+            // WordIndex.createIndex2017();
+           // WordIndex.createSampleText();
 
         }
 
+        private void createSampleText()
+        {
+            Microsoft.Office.Interop.Excel.Application oxApp = new Microsoft.Office.Interop.Excel.Application();
+            //oxApp.Visible = true;
+            oxApp.Workbooks.Add();
+
+            Microsoft.Office.Interop.Excel._Worksheet oxWorkSheet = oxApp.ActiveSheet;
+
+            int lineNumber = 0;
+            float pageRowNumber = 0;
+            int columnNumber = 1;
+            int initialRowOnAllColumns = 0;
+            int rowOnColumnB = 0;
+            int rowOnColumnC = 0;
+            int addCount = 0;
+            
+
+            List<String> testArray = new List<string>();
+
+            for (int i = 0; i < 300; i++)
+            {
+                testArray.Add("This is : " + i);
+            }
+
+            //StreamWriter textWriter = new StreamWriter("C:\\user_pradeep\\fvrs\\index testing\\LogText.txt");
+            foreach (var item in testArray)
+            {
+                lineNumber++;
+                pageRowNumber++;
+                //if (lineNumber <= 47)
+                    if (pageRowNumber/47 <= 1)
+                    {
+                    oxWorkSheet.Cells[lineNumber, "A"] = item;
+                    addCount++;
+                    if (addCount == 1)
+                        initialRowOnAllColumns = lineNumber;
+                   // columnNumber++;
+                  //  if (lineNumber == 47)
+                        if (pageRowNumber/47 == 1)
+                        {
+                         rowOnColumnB = initialRowOnAllColumns;
+                         rowOnColumnC = initialRowOnAllColumns;
+                         addCount = 0;
+                    }
+                        
+                }
+               // if((lineNumber > 47) && (lineNumber <= 94))
+                    if ((pageRowNumber/47 > 1) && (pageRowNumber/47 <= 2))
+                    {
+                    oxWorkSheet.Cells[rowOnColumnB, "B"] = item;
+                    rowOnColumnB++;
+                   // if (lineNumber == 94)
+                        if (pageRowNumber/47 == 2)
+                        {
+                        rowOnColumnB = 0;
+                    }
+                }
+
+               // if ((lineNumber > 93) && (lineNumber <= 140))
+                    if ((pageRowNumber/47 > 2) && (pageRowNumber/47 <= 3))
+                    {
+                    oxWorkSheet.Cells[rowOnColumnC, "C"] = item;
+                    rowOnColumnC++;
+                    //if (lineNumber == 140)
+                        if (pageRowNumber/47 == 3)
+                        {
+                        rowOnColumnC = 0;
+                        pageRowNumber = 0;
+                    }
+                }
+            }
+
+            oxWorkSheet.SaveAs("C:\\user_pradeep\\fvrs\\index testing\\LogTextNew3.xlsx");
+           
+            //textWriter.Close();
+            //textWriter.Dispose();
+        }
+
+        private void createIndex2017()
+        {
+            List<TranscriptWord> SCustomWordDirectory = CustomWordDirectory.OrderBy(o => o.Name).ToList();
+            string[,] indexList = new string[5, 3];
+            int i = 0;
+            int wordCount = 0;
+
+            foreach (TranscriptWord item in SCustomWordDirectory)
+            {
+                wordCount++;
+
+                if (wordCount <=5 )
+                {
+                    indexList[i, 0] = item.Name;
+                    i++;
+                    if (wordCount == 5)
+                    {
+                        i = 0;
+                    } 
+                }
+                if ((wordCount >5) && (wordCount <=10))
+                {
+                    indexList[i, 1] = item.Name;
+                    i++;
+
+                    if (wordCount == 10)
+                    {
+                        i = 0;
+                    }
+                }
+
+                if ((wordCount > 10) && (wordCount <= 15))
+                {
+                    indexList[i, 2] = item.Name;
+                    i++;
+
+                    if (wordCount == 15)
+                    {
+                        i = 0;
+                    }
+                }
+                if (wordCount ==15)
+                {
+                    break;
+                }
+            }
+
+            for (int y = 0; y < 5; y++)
+            {
+                
+                    Console.WriteLine(indexList[y, 0] + "|" + indexList[y, 1] + "|" + indexList[y, 2]);
+                
+                
+            }
+            Console.ReadLine();
+        }
+
+        private void createWrodNewIndexTable()   // 12/08
+        {
+            List<TranscriptWord> SCustomWordDirectory = CustomWordDirectory.OrderBy(o => o.Name).ToList();
+
+            //Document properties
+            //===================
+            Document indexTableDoc = app.Documents.Add();
+            Range indexTableRange = indexTableDoc.Range();
+
+            // Table properties
+            //=================
+            Table myTable = indexTableDoc.Tables.Add(indexTableRange, 1, 3);
+            int columnNumber = 1;
+            int rowNumber = 0;
+            int rowNumberOnNewPage = 0;
+            int totalRowsOnCurrentPage = 0;
+            int startingRowOfTheActivePage = 0;
+
+            // Page and Range properties
+            //==========================
+            object oMissing = System.Reflection.Missing.Value;   
+            Range cellRange = myTable.Cell(1, 1).Range;
+
+            int previousPageNumber = myTable.Rows[1].Cells[1].Range.Information[WdInformation.wdActiveEndPageNumber];
+            int currentPageNumber = previousPageNumber; // Both set to same value to get started
+            
+            
+            //Temp storage properties
+            //=======================
+            int rowCountPageAndLineNumber = 0; 
+            int rowOnePageNumber = 0;
+            int rowOneLineNumber = 0;
+            int pageNumber = 0;
+
+            foreach (TranscriptWord item in SCustomWordDirectory)
+            {
+
+                if (columnNumber == 1) //Add new rows, only when range is on column #1
+                {
+                    myTable.Rows.Add(ref oMissing);
+                    rowNumber++;
+                    currentPageNumber = myTable.Rows[rowNumber].Cells[columnNumber].Range.Information[WdInformation.wdActiveEndPageNumber];
+
+                    //if (currentPageNumber != previousPageNumber)
+                        if (rowNumber == 44)
+                        {
+                        rowNumberOnNewPage = rowNumber;
+                        rowNumber--;
+                        myTable.Cell(rowNumber, columnNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
+                        totalRowsOnCurrentPage = rowNumber;
+                        startingRowOfTheActivePage = (rowNumberOnNewPage - totalRowsOnCurrentPage) - 1;
+                        rowNumber = startingRowOfTheActivePage;
+                        columnNumber++;
+                        previousPageNumber = currentPageNumber;
+
+                    }
+                }
+
+                //Column >1 and < 3 - Need to naviagte through all rows untill row count is == total rows on the current page 
+
+                if ((columnNumber != 1) && (columnNumber < 3))
+                {
+                    if (rowNumber < totalRowsOnCurrentPage)
+                    {
+                        rowNumber++;
+                    }
+                    else
+                    {
+                        myTable.Cell(rowNumber, columnNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
+                        rowNumber = startingRowOfTheActivePage;
+                        columnNumber++;
+                    }
+                }
+
+                if (columnNumber == 3)
+                {
+                    if (rowNumber < totalRowsOnCurrentPage)
+                    {
+                        rowNumber++;
+                    }
+                    else
+                    {
+                        myTable.Cell(rowNumber, columnNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
+                        rowNumber = rowNumberOnNewPage;
+                        columnNumber = 1;
+                        totalRowsOnCurrentPage = 0;
+                    }
+                    
+                }
+
+                cellRange = myTable.Rows[rowNumber].Cells[columnNumber].Range;
+                cellRange.Font.Size = 10;
+                cellRange.Font.Bold = 1;
+                pageNumber = myTable.Rows[rowNumber].Cells[columnNumber].Range.Information[WdInformation.wdActiveEndPageNumber];
+
+                myTable.Rows[rowNumber].Cells[columnNumber].Range.Text = item.Name + " [" + item.Frequency + "]" + " Page# " + pageNumber;
+
+                rowCountPageAndLineNumber = 0;
+                rowOnePageNumber = 0;
+                rowOneLineNumber = 0;
+
+                foreach (Occurrence step in item.PageAndLine)
+                {
+
+                    rowCountPageAndLineNumber++;
+
+                    if (rowCountPageAndLineNumber == 2)
+                    {
+                        //if (columnNumber == 1) //Add new rows, only when range is on column #1
+                        if (rowNumber == 44)
+                        {
+                            myTable.Rows.Add(ref oMissing);
+                            rowNumber++;
+                            currentPageNumber = myTable.Rows[rowNumber].Cells[columnNumber].Range.Information[WdInformation.wdActiveEndPageNumber];
+
+                            if (currentPageNumber != previousPageNumber)
+                            {
+                                rowNumberOnNewPage = rowNumber;
+                                rowNumber--;
+                                myTable.Cell(rowNumber, columnNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
+                                totalRowsOnCurrentPage = rowNumber;
+                                startingRowOfTheActivePage = (rowNumberOnNewPage - totalRowsOnCurrentPage) - 1;
+                                rowNumber = startingRowOfTheActivePage;
+                                columnNumber++;
+                                previousPageNumber = currentPageNumber;
+
+                            }
+                        }
+
+                        if ((columnNumber != 1) && (columnNumber < 3))
+                        {
+                            if (rowNumber < totalRowsOnCurrentPage)
+                            {
+                                rowNumber++;
+                            }
+                            else
+                            {
+                                myTable.Cell(rowNumber, columnNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
+                                rowNumber = startingRowOfTheActivePage;
+                                columnNumber++;
+                            }
+                        }
+
+                        if (columnNumber == 3)
+                        {
+                            if (rowNumber < totalRowsOnCurrentPage)
+                            {
+                                rowNumber++;
+                            }
+                            else
+                            {
+                                myTable.Cell(rowNumber, columnNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
+                                rowNumber = rowNumberOnNewPage;
+                                columnNumber = 1;
+                                totalRowsOnCurrentPage = 0;
+                            }
+
+                        }
+
+
+                        cellRange = myTable.Cell(rowNumber, columnNumber).Range;
+                        cellRange.Font.Size = 7;
+                        cellRange.Font.Bold = 0;
+                        pageNumber = myTable.Rows[rowNumber].Cells[columnNumber].Range.Information[WdInformation.wdActiveEndPageNumber];
+
+                      //  myTable.Cell(rowNumber, columnNumber).TopPadding = 0.00f;
+                        cellRange.ParagraphFormat.SpaceBefore = 0.00f;
+
+                        cellRange.Text = "[P" + rowOnePageNumber + ":" + "L" + rowOneLineNumber + "] [P" + step.CustomPageNumber + ":" + "L" + step.CustomLineNumber + "]" + " Page# " + pageNumber;
+
+                        cellRange.ParagraphFormat.SpaceAfter = 0.00f;
+                       // myTable.Cell(rowNumber, columnNumber).BottomPadding = 0.00f;
+                       
+                        rowCountPageAndLineNumber = 0;
+                        rowOnePageNumber = 0;
+                        rowOneLineNumber = 0;
+                    }
+                    else
+                    {
+                        rowOnePageNumber = step.CustomPageNumber;
+                        rowOneLineNumber = step.CustomLineNumber;
+                    }
+                   
+
+                }
+
+                if (rowCountPageAndLineNumber == 1)
+                {
+                    if (columnNumber == 1) //Add new rows, only when range is on column #1
+                    {
+                        myTable.Rows.Add(ref oMissing);
+                        rowNumber++;
+                        currentPageNumber = myTable.Rows[rowNumber].Cells[columnNumber].Range.Information[WdInformation.wdActiveEndPageNumber];
+
+                        // if (currentPageNumber != previousPageNumber)
+                        if (rowNumber == 44)
+                        {
+                            rowNumberOnNewPage = rowNumber;
+                            rowNumber--;
+                            myTable.Cell(rowNumber, columnNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
+                            totalRowsOnCurrentPage = rowNumber;
+                            startingRowOfTheActivePage = (rowNumberOnNewPage - totalRowsOnCurrentPage) - 1;
+                            rowNumber = startingRowOfTheActivePage;
+                            columnNumber++;
+                            previousPageNumber = currentPageNumber;
+
+                        }
+                    }
+
+                    if ((columnNumber != 1) && (columnNumber < 3))
+                    {
+                        if (rowNumber < totalRowsOnCurrentPage)
+                        {
+                            rowNumber++;
+                        }
+                        else
+                        {
+                            myTable.Cell(rowNumber, columnNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
+                            rowNumber = startingRowOfTheActivePage;
+                            columnNumber++;
+                        }
+                    }
+
+                    if (columnNumber == 3)
+                    {
+                        if (rowNumber < totalRowsOnCurrentPage)
+                        {
+                            rowNumber++;
+                        }
+                        else
+                        {
+                            myTable.Cell(rowNumber, columnNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
+                            rowNumber = rowNumberOnNewPage;
+                            columnNumber = 1;
+                            totalRowsOnCurrentPage = 0;
+                        }
+
+                    }
+
+                    cellRange = myTable.Cell(rowNumber, columnNumber).Range;
+                    cellRange.Font.Size = 7;
+                    cellRange.Font.Bold = 0;
+                    pageNumber = myTable.Rows[rowNumber].Cells[columnNumber].Range.Information[WdInformation.wdActiveEndPageNumber];
+
+                   // myTable.Cell(rowNumber, columnNumber).TopPadding = 0.00f;
+                    cellRange.ParagraphFormat.SpaceBefore = 0.00f;
+
+                    cellRange.Text = "[P" + rowOnePageNumber + ":" + "L" + rowOneLineNumber + "] " + " Page# " + pageNumber;
+
+                    cellRange.ParagraphFormat.SpaceAfter = 0.00f;
+                    //myTable.Cell(rowNumber, columnNumber).BottomPadding = 0.00f;
+                }
+
+            }
+
+
+            indexTableDoc.Save();
+            indexTableDoc.Close();
+            app.Quit();
+        }
         private void createWrodIndexTable()   // 11/03
         {
             List<TranscriptWord> SCustomWordDirectory = CustomWordDirectory.OrderBy(o => o.Name).ToList();
@@ -84,19 +482,26 @@ namespace ReadWord
             {
                 
 
-                if ((tableRowCount == 32) && (colNumber < 3))
+                if ((tableRowCount == 51) && (colNumber < 3))
                 {
                     myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
 
-                    rowNumber = (actualRowCount - 32);
+                    rowNumber = (actualRowCount - 51);
                     colNumber++;
                     tableRowCount = 0;
 
                 }
 
-                if ((tableRowCount == 32) && (colNumber == 3))
+                if ((tableRowCount == 51) && (colNumber == 3))
                 {
                     myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
+
+
+                    //indexTableRange = indexTableDoc.Range(Start: myTable.Cell(rowNumber, colNumber).Range, End: myTable.Cell(rowNumber +1, colNumber).Range);
+                    indexTableRange.Collapse(WdCollapseDirection.wdCollapseEnd);
+                    indexTableRange.InsertBreak(WdBreakType.wdPageBreak);
+                    indexTableRange.Collapse(WdCollapseDirection.wdCollapseEnd);
+
 
                     rowNumber = actualRowCount;
                     tableRowCount = 0;
@@ -121,7 +526,7 @@ namespace ReadWord
 
                 cell1.Range.ParagraphFormat.SpaceBefore = 0.00f;
 
-                cellRange.Text = item.Name + " [" + item.Frequency + "]" + "\r\n";
+                cellRange.Text = item.Name + " [" + item.Frequency + "]";
 
                 cell1.Range.ParagraphFormat.SpaceAfter = 0.00f;
 
@@ -153,19 +558,24 @@ namespace ReadWord
                     if (columnCountPageAndLine == 2)
                     {
 
-                        if ((tableRowCount == 32) && (colNumber < 3))
+                        if ((tableRowCount == 51) && (colNumber < 3))
                         {
                             myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
 
-                            rowNumber = (actualRowCount - 32);
+                            rowNumber = (actualRowCount - 51);
                             colNumber++;
                             tableRowCount = 0;
 
                         }
 
-                        if ((tableRowCount == 32) && (colNumber == 3))
+                        if ((tableRowCount == 51) && (colNumber == 3))
                         {
-                            myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
+                             myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
+
+                            //indexTableRange = indexTableDoc.Range(Start: myTable.Cell(rowNumber, colNumber).Range, End: myTable.Cell(rowNumber + 1, colNumber).Range);
+                            indexTableRange.Collapse(WdCollapseDirection.wdCollapseEnd);
+                            indexTableRange.InsertBreak(WdBreakType.wdPageBreak);
+                            indexTableRange.Collapse(WdCollapseDirection.wdCollapseEnd);
 
                             rowNumber = actualRowCount;
                             tableRowCount = 0;
@@ -193,7 +603,7 @@ namespace ReadWord
                        
                         cell2.Range.ParagraphFormat.SpaceBefore = 0.00f;
 
-                        cellRange.Text = "[P" + columnOnePageNumber + ":" + "L" + columnOneLineNumber + "] [P" + step.CustomPageNumber + ":" + "L" + step.CustomLineNumber + "]" + "\r\n";
+                        cellRange.Text = "[P" + columnOnePageNumber + ":" + "L" + columnOneLineNumber + "] [P" + step.CustomPageNumber + ":" + "L" + step.CustomLineNumber + "]";
                         
 
                         cellRange.ParagraphFormat.SpaceAfter = 0.00f;        // Today
@@ -230,19 +640,24 @@ namespace ReadWord
 
                 if (columnCountPageAndLine == 1)
                 {
-                    if ((tableRowCount == 32) && (colNumber < 3))
+                    if ((tableRowCount == 51) && (colNumber < 3))
                     {
                         myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
 
-                        rowNumber = (actualRowCount - 32);
+                        rowNumber = (actualRowCount - 51);
                         colNumber++;
                         tableRowCount = 0;
 
                     }
 
-                    if ((tableRowCount == 32) && (colNumber == 3))
+                    if ((tableRowCount == 51) && (colNumber == 3))
                     {
                         myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
+
+                       // indexTableRange = indexTableDoc.Range(Start: myTable.Cell(rowNumber, colNumber).Range, End: myTable.Cell(rowNumber + 1, colNumber).Range);
+                        indexTableRange.Collapse(WdCollapseDirection.wdCollapseEnd);
+                        indexTableRange.InsertBreak(WdBreakType.wdPageBreak);
+                        indexTableRange.Collapse(WdCollapseDirection.wdCollapseEnd);
 
                         rowNumber = actualRowCount;
                         tableRowCount = 0;
@@ -269,7 +684,7 @@ namespace ReadWord
 
                     cell3.Range.ParagraphFormat.SpaceBefore = 0.00f;
 
-                    cellRange.Text = "[P" + columnOnePageNumber + ":" + "L" + columnOneLineNumber + "]" + "\r\n";
+                    cellRange.Text = "[P" + columnOnePageNumber + ":" + "L" + columnOneLineNumber + "]";
 
                     cellRange.ParagraphFormat.SpaceAfter = 0;          //Today
                     cell3.Range.ParagraphFormat.SpaceAfter = 0.00f;
@@ -303,7 +718,7 @@ namespace ReadWord
             int actualRowCount = 0;
             int tableRowCount = 0;
 
-            for (int i = 1; i <= 86; i++)
+            for (int i = 1; i <= 126; i++)
             {
 
                 if (colNumber == 1)
@@ -315,26 +730,26 @@ namespace ReadWord
                 rowNumber++;
                 tableRowCount++;
 
-                myTable.Cell(rowNumber, colNumber).BottomPadding = 0.00f;
-                myTable.Cell(rowNumber, colNumber).TopPadding = 0.00f;
+               // myTable.Cell(rowNumber, colNumber).BottomPadding = 0.00f;
+                //myTable.Cell(rowNumber, colNumber).TopPadding = 0.00f;
 
                 cellRange = myTable.Cell(rowNumber, colNumber).Range;
 
-                cellRange.ParagraphFormat.SpaceBefore = 0.0f;
+                //cellRange.ParagraphFormat.SpaceBefore = 0.0f;
 
-                cellRange.Text = "The value is :" + i + " column:" + colNumber;
+                cellRange.Text = "The value is :" + i + " column:" + colNumber ;
 
-                cellRange.ParagraphFormat.SpaceAfter = 0.0f;
+                //cellRange.ParagraphFormat.SpaceAfter = 0.0f;
 
                 myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderRight].LineStyle = WdLineStyle.wdLineStyleSingle;
                 myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderLeft].LineStyle = WdLineStyle.wdLineStyleSingle;
-                if ((actualRowCount == 9) || (actualRowCount == 21) || (actualRowCount == 30))
-                {
-                    cellRange.Font.Size = 10;
-                    cellRange.Font.Bold = 1;
+               // if ((actualRowCount == 9) || (actualRowCount == 21) || (actualRowCount == 30))
+              // {
+                  //  cellRange.Font.Size = 10;
+                 //   cellRange.Font.Bold = 1;
                     myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderTop].LineStyle = WdLineStyle.wdLineStyleSingle;
                     myTable.Cell(rowNumber, colNumber).Borders[WdBorderType.wdBorderBottom].LineStyle = WdLineStyle.wdLineStyleSingle;
-                }
+               //}
 
 
                 if ((tableRowCount == 28) && (colNumber < 3))
@@ -371,22 +786,87 @@ namespace ReadWord
 
             Document indexDoc = app.Documents.Add();
             Range indexRange = indexDoc.Range();
+            indexDoc.PageSetup.TextColumns.SetCount(5);
             indexDoc.Activate();
             // indexDoc.Range().Select();
             indexRange.Select();
 
             int mainElements = 0;
             int subElements = 0;
+            string previousLabel = ""; //03/17/17
+            bool isNumber = false; //03/17/17
+            bool isLetter = false; //03/17/17
+            bool numberSignPrinted = false; //02/17/17
+            bool firstLetterPrinted = false; //02/17/17
 
             foreach (TranscriptWord item in SCustomWordDirectory)
             {
+                //Check first charactor of the word to determine type and identification
+                //-----------------------03/17/17--------------------------------------
+
+                string firstCharOfTheWord = item.Name.Substring(0, 1);
+                int valueOne = 0;
+                
+                bool parsed = Int32.TryParse(firstCharOfTheWord, out valueOne);
+
+                if (parsed)
+                {
+                    isNumber = true;
+                    isLetter = false;
+                   
+                    if (previousLabel == "#")
+                    {
+                        numberSignPrinted = true;
+                    }
+                }
+                else
+                {
+                    if (Regex.IsMatch(firstCharOfTheWord, @"^[a-zA-Z]"))
+                    {
+                        isLetter = true;
+                        isNumber = false;
+
+                        if (previousLabel == firstCharOfTheWord)
+                        {
+                            firstLetterPrinted = true;
+                        }else
+                        {
+                            firstLetterPrinted = false;
+                        }
+                    }
+
+                }
+                  
+                if((isNumber) && (!numberSignPrinted))
+                {
+                    previousLabel = "#";
+
+                    Paragraph para0 = indexDoc.Paragraphs.Add();
+                    para0.Range.Font.Size = 15;
+                    para0.Range.Font.Bold = 1;
+                    para0.Range.Text = " " + previousLabel + " " +  "\r\n";
+                    numberSignPrinted = true;
+                }
+
+                if ((isLetter) && (!firstLetterPrinted))
+                {
+                    previousLabel = firstCharOfTheWord;
+
+                    Paragraph para0 = indexDoc.Paragraphs.Add();
+                    para0.Range.Font.Size = 15;
+                    para0.Range.Font.Bold = 1;
+                    para0.Range.Text = "- " + previousLabel.ToUpper() + " -" + "\r\n";
+                    firstLetterPrinted = true;
+                }
+                
+                //-----------------------03/17/17--------------------------------------
+
                 Paragraph para1 = indexDoc.Paragraphs.Add();
                 para1.Range.Font.Size = 10;
                 para1.Range.Font.Bold = 1;
 
-               // para1.Range.
-                //para1.Range.Text = item.Name + " [" + item.Frequency + "]" + "\r\n"; 10/26
-
+                
+               
                 para1.Range.Text = item.Name + " [" + item.Frequency + "]" + "\r\n";  // 10/26
 
                 int columnCount = 0;
@@ -449,7 +929,7 @@ namespace ReadWord
         private void processDocument()
         {
 
-            Document document = app.Documents.Open(@"C:\User_Pradeep\Transcript3.doc", ReadOnly: true);
+            Document document = app.Documents.Open(@"C:\User_Pradeep\Transcript2.doc", ReadOnly: true);
             document.Activate();
 
             //int totalWordCount = document.Words.Count; 10/25
