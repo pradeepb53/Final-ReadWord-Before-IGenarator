@@ -791,8 +791,8 @@ namespace ReadWord
             // indexDoc.Range().Select();
             indexRange.Select();
 
-            int mainElements = 0;
-            int subElements = 0;
+            //int mainElements = 0;
+           // int subElements = 0;
             string previousLabel = ""; //03/17/17
             bool isNumber = false; //03/17/17
             bool isLetter = false; //03/17/17
@@ -873,13 +873,13 @@ namespace ReadWord
                 int columnOnePageNumber = 0;
                 int columnOneLineNumber = 0;
 
-                mainElements++;
+               // mainElements++;
 
                 foreach (Occurrence step in item.PageAndLine)
                 {
                     columnCount++; // Actually row count
 
-                    subElements++;
+                   // subElements++;
 
                     if (columnCount == 2)
                     {
