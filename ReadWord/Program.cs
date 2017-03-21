@@ -859,6 +859,7 @@ namespace ReadWord
                     firstLetterPrinted = true;
                 }
                 
+
                 //-----------------------03/17/17--------------------------------------
 
                 Paragraph para1 = indexDoc.Paragraphs.Add();
