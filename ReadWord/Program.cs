@@ -30,12 +30,109 @@ namespace ReadWord
 
 
             Program WordIndex = new Program();
-               WordIndex.processDocument();  // Read main document
+             //  WordIndex.processDocument();  // Read main document - Confirmed working.
+            WordIndex.processDocument1();  // New routine - 03/31/2017 (after first prof read on 03/17/2017) 
 
-             WordIndex.printWordIndex(); // Old print method
+           //  WordIndex.printWordIndex(); // Current print method - confirmed working- may need minor modifications
 
         }
 
+        private void processDocument1()
+        {
+            //  Document document = app.Documents.Open(@"C:\User_Pradeep\Transcript2.doc", ReadOnly: true);
+            Document document = app.Documents.Open(@"C:\User_Pradeep\Transcript3C.doc", ReadOnly: true); //test version
+
+            //Split words into an array
+            string firstParseString = "";
+            string secondParseString = "";
+            string thirdParseString = ""; // new changes
+            string finalStr = "";
+            firstParseString = document.Content.Text;
+        
+            string[] firstParseWordList = null;
+            string[] secondParseWordList = null;
+            string[] thirdParseWordList = null;
+
+            //First parse-split, remove line-carrage, tabs after questions, tabs after answers, paranthesis,tab after ?, tab after period etc..etc
+
+            firstParseWordList = firstParseString.Replace("\r", " ").Replace("Q\t", " ").Replace("A\t", " ").Replace("(", " ")
+                      .Replace(")", " ").Replace("?\t", "  ").Replace("—\t", "  ").Replace("?", "  ")
+                      .Replace(".\t", "  ").Split(' ');
+            
+           //Read after first-parse split, remove tabs with leading digits
+
+            for (int i = 0; i < firstParseWordList.Length; i++)
+            {
+                if (firstParseWordList[i].Trim().Equals(""))
+                {
+                    continue;
+                }
+                else
+                {
+                    if (i == firstParseWordList.Length - 1)
+                    {
+                        string tempOutputOne = Regex.Replace(firstParseWordList[i], @"^\d+\t", " "); //Remove "digits and tab" at the begining of the word - OK 
+                        string tempOutputTwo = Regex.Replace(tempOutputOne, @"\d+\t", " "); //Remove "digits and tab" from anywhere in the word - OK     
+                        secondParseString += tempOutputTwo;    
+                    }
+                    else
+                    {
+                        string tempOutputOne= Regex.Replace(firstParseWordList[i], @"^\d+\t", " "); //Remove "digits and tab" at the begining of the word - OK 
+                        string tempOutputTwo = Regex.Replace(tempOutputOne, @"\d+\t", " "); //Remove "digits and tab" from anywhere in the word - OK       
+                        secondParseString += tempOutputTwo + " ";        
+                    }
+                }
+            }
+
+            //Second parse-split, remove all remaining tabs and under-scores
+
+            secondParseWordList = secondParseString.Replace("\t", " ").Replace("__", " ").Split(' ');
+
+            //Read after second-parse split, remove leading and trailling hyphens, remove leading and trailling dashes
+            //Remove trailling periods, commas, colons and semicolons
+
+            for (int i = 0; i < secondParseWordList.Length; i++)
+            {
+                if (secondParseWordList[i].Trim().Equals(""))
+                {
+                    continue;
+                }
+                else
+                {
+                    if (i == secondParseWordList.Length - 1)
+                    {
+                        string tempOutputOne = Regex.Replace(secondParseWordList[i], @"^\-+|\-+$", " "); //Remove leading and trailling hyphens
+                        string tempOutputTwo = Regex.Replace(tempOutputOne, @"^\—+|\—+$", " "); //Remove leading and trailling dashes
+                        string tempOutputThree = Regex.Replace(tempOutputTwo, @"\.+$|\,+$|\:+$|\;+$", " "); //Remove trailling periods, commas, colons, semicolons
+                        
+                        thirdParseString += tempOutputThree; 
+                    }
+                    else
+                    {
+                        
+                        string tempOutputOne = Regex.Replace(secondParseWordList[i], @"^\-+|\-+$", " ");  
+                        string tempOutputTwo = Regex.Replace(tempOutputOne, @"^\—+|\—+$", " ");
+                        string tempOutputThree = Regex.Replace(tempOutputTwo, @"\.+$|\,+$|\:+$|\;+$", " ");
+                       
+                        thirdParseString += tempOutputThree + " ";
+                        
+                    }
+                }
+                
+            }
+
+            thirdParseWordList = thirdParseString.Split(' ');
+
+            string[] singleEntry = thirdParseWordList.Distinct().ToArray();
+
+            for (int i = 0; i < thirdParseWordList.Length; i++)
+            {
+                finalStr = thirdParseWordList[i];
+            }
+
+
+            document.Close();
+        }
 
         private void printWordIndex()
         {
