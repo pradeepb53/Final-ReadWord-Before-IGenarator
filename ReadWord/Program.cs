@@ -16,8 +16,8 @@ namespace ReadWord
         private Application app = new Application();
 
 
-
         private static List<TranscriptWord> CustomWordDirectory = new List<TranscriptWord>();
+        private static string[] finalDeDupedWordList = null;
 
         private static Stopwatch applicationTime = new Stopwatch();
 
@@ -33,20 +33,22 @@ namespace ReadWord
              //  WordIndex.processDocument();  // Read main document - Confirmed working.
             WordIndex.processDocument1();  // New routine - 03/31/2017 (after first prof read on 03/17/2017) 
 
-           //  WordIndex.printWordIndex(); // Current print method - confirmed working- may need minor modifications
+            WordIndex.printWordIndex(); // Current print method - confirmed working- may need minor modifications
 
         }
 
         private void processDocument1()
         {
+            applicationTime.Start(); //Start stopwatch
             //  Document document = app.Documents.Open(@"C:\User_Pradeep\Transcript2.doc", ReadOnly: true);
             Document document = app.Documents.Open(@"C:\User_Pradeep\Transcript3C.doc", ReadOnly: true); //test version
 
             //Split words into an array
+
             string firstParseString = "";
             string secondParseString = "";
             string thirdParseString = ""; // new changes
-            string finalStr = "";
+            
             firstParseString = document.Content.Text;
         
             string[] firstParseWordList = null;
@@ -59,7 +61,7 @@ namespace ReadWord
                       .Replace(")", " ").Replace("?\t", "  ").Replace("—\t", "  ").Replace("?", "  ")
                       .Replace(".\t", "  ").Split(' ');
             
-           //Read after first-parse split, remove tabs with leading digits
+           //Read after first-parse-split, remove tabs with leading digits
 
             for (int i = 0; i < firstParseWordList.Length; i++)
             {
@@ -88,7 +90,7 @@ namespace ReadWord
 
             secondParseWordList = secondParseString.Replace("\t", " ").Replace("__", " ").Split(' ');
 
-            //Read after second-parse split, remove leading and trailling hyphens, remove leading and trailling dashes
+            //Read after second-parse-split, remove leading and trailling hyphens, remove leading and trailling dashes
             //Remove trailling periods, commas, colons and semicolons
 
             for (int i = 0; i < secondParseWordList.Length; i++)
@@ -113,9 +115,8 @@ namespace ReadWord
                         string tempOutputOne = Regex.Replace(secondParseWordList[i], @"^\-+|\-+$", " ");  
                         string tempOutputTwo = Regex.Replace(tempOutputOne, @"^\—+|\—+$", " ");
                         string tempOutputThree = Regex.Replace(tempOutputTwo, @"\.+$|\,+$|\:+$|\;+$", " ");
-                       
-                        thirdParseString += tempOutputThree + " ";
                         
+                        thirdParseString += tempOutputThree + " ";
                     }
                 }
                 
@@ -123,14 +124,164 @@ namespace ReadWord
 
             thirdParseWordList = thirdParseString.Split(' ');
 
-            string[] singleEntry = thirdParseWordList.Distinct().ToArray();
+            finalDeDupedWordList = thirdParseWordList.Distinct().ToArray();
 
-            for (int i = 0; i < thirdParseWordList.Length; i++)
+            document.Close();
+
+            this.processDocument2(ref finalDeDupedWordList);
+        }
+
+        private void processDocument2(ref string[] finalDeDupedWordList)
+        {
+            Document document = app.Documents.Open(@"C:\User_Pradeep\Transcript3C.doc", ReadOnly: true); //test version
+
+            document.Activate();
+
+            HashSet<string> processedWordList = new HashSet<string>();
+
+            string finalSearchWord = "";
+
+            //Console.SetWindowSize();
+
+            for (int i = 0; i < finalDeDupedWordList.Length; i++)
             {
-                finalStr = thirdParseWordList[i];
+
+                finalSearchWord = finalDeDupedWordList[i].Trim();
+
+                //Words and sentences within double quotes(" ") should be identified, quotes should be removed in order to preserve correct print order (i.e. #'s $'s digits and actual words)  
+
+                if (Regex.IsMatch(finalSearchWord, @"^[a-zA-Z0-9\$#]"))
+                {
+
+                }
+                else
+                {
+                    //If the word is not all spaces and does not starts with one of the allowed charactors, then remove first position, could be a starting double quote or single quote 
+                    if (finalSearchWord != "")
+                    {
+                        finalSearchWord = finalSearchWord.Remove(0, 1);
+                    }
+                   
+                }
+
+                //If the last position of the word in not one of the allowed charactors, then remove it, could be a closing double quote or single quote 
+                if (finalSearchWord != "")
+                {
+                    if (Regex.IsMatch(finalSearchWord.Substring(finalSearchWord.Length - 1, 1), @"[a-zA-Z0-9\$#]"))
+                    {
+
+                    }
+                    else
+                    {
+
+                        finalSearchWord = finalSearchWord.Remove(finalSearchWord.Length - 1, 1);
+
+                    }
+                }
+
+                //Cleanup any spaces created by above process if any 
+                finalSearchWord.Trim();
+
+                if (finalSearchWord.Length > 2)
+                {
+
+                    string processedWord = processedWordList.FirstOrDefault(w => w == finalSearchWord); // 10/25
+
+                    if (processedWord == null)
+                    {
+
+                        Console.WriteLine("Scanning transcript- processing word # " + i);
+
+                        var CustomWord = new TranscriptWord();
+
+                        // Not in the array, it is a new word so add to processed word list and start processing....
+
+                        processedWordList.Add(finalSearchWord); 
+
+                        CustomWord.Name = finalSearchWord;
+
+                        int wordFoundFrequency = 0;
+
+                        Range searchRange = document.Range(Start: document.Content.Start, End: document.Content.End); //Look for the word from start of the transcript to end
+
+                        searchRange.Find.Forward = true; // 10/26 all range words
+                        searchRange.Find.MatchCase = true; // 04/14/2016
+                        searchRange.Find.Text = finalSearchWord;
+
+                        currentWord = finalSearchWord;
+
+                        searchRange.Find.Execute(MatchWholeWord: true);
+                        int currentLineNumber = 0;
+                        int currentPageNumber = 0;
+                        int pageNumberOfTheWord = 0;
+                        int lineNumberOfTheWord = 0;
+
+
+                        while (searchRange.Find.Found)
+                        {
+
+                            Console.WriteLine("Looking for word : " + currentWord);
+
+                            // Get current sentence being searched and extract the first word
+
+                            string textOfTheSearchedRangeSentence = searchRange.Sentences.First.Text;
+                            string firstWordOfTheSearchedSentence = textOfTheSearchedRangeSentence.Substring(0, finalSearchWord.Length);
+
+                            //If sentence starts with a number, it usually is a question number, now if it is a number and matches the searched text, it definitely 
+                            // cannot be a regular word, it got to be a question number, so ignore! 
+
+                            if ((firstWordOfTheSearchedSentence == finalSearchWord) && (Regex.IsMatch(firstWordOfTheSearchedSentence, @"^[0-9]")))
+                            {
+
+                            }
+                            else
+                            {
+
+                               // if (currentPageNumber != 1) // Page # 1 is cover page
+                              //  {
+                                    wordFoundFrequency++;
+
+                                    currentPageNumber = searchRange.Information[WdInformation.wdActiveEndPageNumber]; 
+
+                                    currentLineNumber = searchRange.Information[WdInformation.wdFirstCharacterLineNumber];
+
+
+                                    //Check whether current word is repeating in the same page and line number, if not, create the "Occurrence" object. 
+
+                                    if (wordFoundFrequency > 1)
+                                    {
+                                        if (pageNumberOfTheWord != currentPageNumber || lineNumberOfTheWord != currentLineNumber)
+                                        {
+                                            pageNumberOfTheWord = currentPageNumber;
+                                            lineNumberOfTheWord = currentLineNumber;
+
+                                            var CustomOccurrence = new Occurrence { CustomPageNumber = pageNumberOfTheWord, CustomLineNumber = lineNumberOfTheWord };
+                                            CustomWord.PageAndLine.Add(CustomOccurrence);
+                                        }
+
+                                    }
+                                    else
+                                    {
+                                        pageNumberOfTheWord = currentPageNumber;
+                                        lineNumberOfTheWord = currentLineNumber;
+
+                                        var CustomOccurrence = new Occurrence { CustomPageNumber = pageNumberOfTheWord, CustomLineNumber = lineNumberOfTheWord };
+                                        CustomWord.PageAndLine.Add(CustomOccurrence);
+                                    }
+                               // }
+
+                            }
+
+                            searchRange.Find.Execute(MatchWholeWord: true);
+
+                        }
+
+                        CustomWord.Frequency = wordFoundFrequency;
+                        CustomWordDirectory.Add(CustomWord);
+                    }
+
+                }
             }
-
-
             document.Close();
         }
 
@@ -151,9 +302,13 @@ namespace ReadWord
             string indexAlphabetLabel = ""; 
 
             //Logical vars
-            bool isNumber = false; 
-            bool isLetter = false; 
-            bool numberSignPrinted = false; 
+            bool isRealNumber = false;
+            bool isNumberSign = false;
+            bool isLetter = false;
+            bool isCurrency = false; //04/14/2017
+            bool numberSignPrinted = false;
+            bool numericalDigitsPrinted = false;
+            bool currencySignPrinted = false; //04/14/2017
             bool firstLetterPrinted = false; 
 
             foreach (TranscriptWord item in SCustomWordDirectory)
@@ -163,41 +318,92 @@ namespace ReadWord
 
                 //Check first charactor of the word to determine type and identification
                 string firstCharOfTheWord = item.Name.Substring(0, 1);
-                int valueOne = 0;
-                
-                //Assert whether first char of the current word is a number or later, then print it under appropriate
-                //alphabet label 
-                bool parsed = Int32.TryParse(firstCharOfTheWord, out valueOne);
+                // int valueOne = 0;
 
-                if (parsed)
+                //Assert whether first char of the current word is a number sign,$ sign,digit or letter 
+                //then print it under appropriate label
+
+                //Currency
+                if (Regex.IsMatch(firstCharOfTheWord, @"^[$]"))
                 {
-                    isNumber = true;
+                    isCurrency = true;
                     isLetter = false;
-                   
-                    if (indexAlphabetLabel == "#")
-                    {
-                        numberSignPrinted = true;
-                    }
+                    isRealNumber = false;
+                    isNumberSign = false;
                 }
-                else
+
+                //Numerical Digit
+                if (Regex.IsMatch(firstCharOfTheWord, @"^[0-9]"))
                 {
-                    if (Regex.IsMatch(firstCharOfTheWord, @"^[a-zA-Z]"))
-                    {
-                        isLetter = true;
-                        isNumber = false;
+                    isRealNumber = true;
+                    isCurrency = false;
+                    isLetter = false;
+                    isNumberSign = false;
+                }
 
-                        if (indexAlphabetLabel == firstCharOfTheWord)
-                        {
-                            firstLetterPrinted = true;
-                        }else
-                        {
-                            firstLetterPrinted = false;
-                        }
+                //Starts with number sign
+                if (Regex.IsMatch(firstCharOfTheWord, @"^[#]"))
+                {
+                    isNumberSign = true;
+                    isCurrency = false;
+                    isLetter = false;
+                    isRealNumber = false;  
+                }
+
+                ////Starts with double quotes
+                //if (Regex.IsMatch(firstCharOfTheWord, @"["]"))
+                //{
+                //    isNumberSign = true;
+                //    isCurrency = false;
+                //    isLetter = false;
+                //    isRealNumber = false;
+                //}
+
+                // Alphabetical letter
+                if (Regex.IsMatch(firstCharOfTheWord, @"^[a-zA-Z]"))
+                {
+                    isLetter = true;
+                    isCurrency = false;
+                    isRealNumber = false;
+                    isNumberSign = false;
+
+                    if (indexAlphabetLabel.ToLower() == firstCharOfTheWord.ToLower())
+                    {
+                        firstLetterPrinted = true;
+                    }
+                    else
+                    {
+                        firstLetterPrinted = false;
                     }
 
                 }
-                  
-                if((isNumber) && (!numberSignPrinted)) // First char is a number, number sign is not printed.
+               
+                // First char is $ sign, dollar sign is not printed.
+                if ((isCurrency) && (!currencySignPrinted)) 
+                {
+                    indexAlphabetLabel = "$";
+
+                    Paragraph labelParagraph = indexDoc.Paragraphs.Add();
+                    labelParagraph.Range.Font.Size = 15;
+                    labelParagraph.Range.Font.Bold = 1;
+                    labelParagraph.Range.Text = " " + indexAlphabetLabel + " " + "\r\n";
+                    currencySignPrinted = true;
+                }
+
+                // Real digits, label 0-9 not printed.
+                if ((isRealNumber) && (!numericalDigitsPrinted))
+                {
+                    indexAlphabetLabel = "0-9";
+
+                    Paragraph labelParagraph = indexDoc.Paragraphs.Add();
+                    labelParagraph.Range.Font.Size = 15;
+                    labelParagraph.Range.Font.Bold = 1;
+                    labelParagraph.Range.Text = " " + indexAlphabetLabel + " " + "\r\n";
+                    numericalDigitsPrinted = true;
+                }
+
+                // First char is number sign, number sign is not printed.
+                if ((isNumberSign) && (!numberSignPrinted)) 
                 {
                     indexAlphabetLabel = "#";
 
@@ -208,7 +414,8 @@ namespace ReadWord
                     numberSignPrinted = true;
                 }
 
-                if ((isLetter) && (!firstLetterPrinted)) //First char is a letter, alphabet label is not printed. 
+                //First char is a letter, alphabet label is not printed. 
+                if ((isLetter) && (!firstLetterPrinted)) 
                 {
                     indexAlphabetLabel = firstCharOfTheWord;
 
@@ -292,42 +499,8 @@ namespace ReadWord
             
            Document document = app.Documents.Open(@"C:\User_Pradeep\Transcript3C.doc", ReadOnly: true); //test version
 
-            //--------------------------------------------------------------------->New changes to be implemented <-------------------------------------------
-
-            //var wordEncode = Microsoft.Office.Core.MsoEncoding.msoEncodingUSASCII;
-            ////Split words into an array
-            //string str = "";
-            //string newStr = "";
-            //string finalStr = "";
-            //str = document.Content.Text;
-            //string[] words = null;
-            //string[] newWords = null;
-            //words = str.Replace("\r", "").Replace("\tQ", "").Replace("\tA", "").Replace("(", "").Replace(")", "").Replace(":", "").Split(' ');
-            //for (int i = 0; i < words.Length; i++)
-            //{
-            //    if (words[i].Trim().Equals(""))
-            //    {
-            //        continue;
-            //    }
-            //    else
-            //    {
-            //        if (i == words.Length - 1)
-            //        {
-            //            newStr += words[i];
-            //        }
-            //        else
-            //        {
-            //            newStr += words[i] + " ";
-            //        }
-            //    }
-            //}
-            //newWords = newStr.Split(' ');
-
-            //for (int i = 0; i < newWords.Length; i++)
-            //{
-            //    finalStr = newWords[i];
-            //}
-            //<--------------------------------------------------------------------
+           
+            
             document.Activate();
 
             applicationTime.Start(); //Start stopwatch
